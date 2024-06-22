@@ -1,126 +1,148 @@
-local QBCore = exports['qb-core']:GetCoreObject()
-
-RegisterServerEvent('ps-drugprocessing:pickedUpHydrochloricAcid', function()
+RegisterServerEvent('mrf_drugprocess:pickedUpHydrochloricAcid', function()
 	local src = source
 	local Player = QBCore.Functions.GetPlayer(src)
 
-	if Player.Functions.AddItem("hydrochloric_acid", 1) then
-		TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["hydrochloric_acid"], "add")
+	if not Player then return end
+
+	if Player.Functions.AddItem('hydrochloric_acid', 1) then
+		TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['hydrochloric_acid'], 'add', 1)
+		TriggerEvent('qb-log:server:CreateLog', 'methlogs', 'Drug Processing (Meth)', 'pink', ('**Player:** %s | **License:** ||(%s)||\n **Info:** Collected Hydrochloric Acid From Location'):format(GetPlayerName(src), Player.PlayerData.license))
 	end
 end)
 
-RegisterServerEvent('ps-drugprocessing:pickedUpSodiumHydroxide', function()
+RegisterServerEvent('mrf_drugprocess:pickedUpSodiumHydroxide', function()
 	local src = source
 	local Player = QBCore.Functions.GetPlayer(src)
 
-	if Player.Functions.AddItem("sodium_hydroxide", 1) then 
-		TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["sodium_hydroxide"], "add")
+	if not Player then return end
+
+	if Player.Functions.AddItem('sodium_hydroxide', 1) then
+		TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['sodium_hydroxide'], 'add', 1)
+		TriggerEvent('qb-log:server:CreateLog', 'methlogs', 'Drug Processing (Meth)', 'pink', ('**Player:** %s | **License:** ||(%s)||\n **Info:** Collected Sodium Hydroxide From Location'):format(GetPlayerName(src), Player.PlayerData.license))
 	end
 end)
 
-RegisterServerEvent('ps-drugprocessing:pickedUpSulfuricAcid', function()
+RegisterServerEvent('mrf_drugprocess:pickedUpSulfuricAcid', function()
 	local src = source
 	local Player = QBCore.Functions.GetPlayer(src)
 
-	if Player.Functions.AddItem("sulfuric_acid", 1) then
-		TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["sulfuric_acid"], "add")
+	if not Player then return end
+
+	if Player.Functions.AddItem('sulfuric_acid', 1) then
+		TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['sulfuric_acid'], 'add', 1)
+		TriggerEvent('qb-log:server:CreateLog', 'methlogs', 'Drug Processing (Meth)', 'pink', ('**Player:** %s | **License:** ||(%s)||\n **Info:** Collected Sulfuric Acid From Location'):format(GetPlayerName(src), Player.PlayerData.license))
 	end
 end)
 
-RegisterServerEvent('ps-drugprocessing:processChemicals', function()
+RegisterServerEvent('mrf_drugprocess:processChemicals', function()
 	local src = source
 	local Player = QBCore.Functions.GetPlayer(src)
 
-	if Player.Functions.RemoveItem("sulfuric_acid", Config.MethProcessing.SulfAcid) then
-		if Player.Functions.RemoveItem("hydrochloric_acid", Config.MethProcessing.HydAcid) then
-			if Player.Functions.RemoveItem("sodium_hydroxide", Config.MethProcessing.SodHyd) then
-				if Player.Functions.AddItem("liquidmix", 1) then
-					TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["sulfuric_acid"], "remove", Config.MethProcessing.SulfAcid)
-					TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["hydrochloric_acid"], "remove", Config.MethProcessing.HydAcid)
-					TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["sodium_hydroxide"], "remove", Config.MethProcessing.SodHyd)
-					TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["liquidmix"], "add", 1)
+	if not Player then return end
+
+	if Player.Functions.RemoveItem('sulfuric_acid', 1) then
+		if Player.Functions.RemoveItem('hydrochloric_acid', 1) then
+			if Player.Functions.RemoveItem('sodium_hydroxide', 1) then
+				if Player.Functions.AddItem('liquidmix', 1) then
+					TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['sulfuric_acid'], 'remove', 1)
+					TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['hydrochloric_acid'], 'remove', 1)
+					TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['sodium_hydroxide'], 'remove', 1)
+					TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['liquidmix'], 'add', 1)
+					TriggerEvent('qb-log:server:CreateLog', 'methlogs', 'Drug Processing (Meth)', 'pink', ('**Player:** %s | **License:** ||(%s)||\n **Info:** Processed Items Into Liquid Mix'):format(GetPlayerName(src), Player.PlayerData.license))
 				else
-					Player.Functions.AddItem("sulfuric_acid", Config.MethProcessing.SulfAcid)
-					Player.Functions.AddItem("hydrochloric_acid", Config.MethProcessing.HydAcid)
-					Player.Functions.AddItem("sodium_hydroxide", Config.MethProcessing.SodHyd)
+					Player.Functions.AddItem('sulfuric_acid', 1)
+					Player.Functions.AddItem('hydrochloric_acid', 1)
+					Player.Functions.AddItem('sodium_hydroxide', 1)
 				end
 			else
-				Player.Functions.AddItem("sulfuric_acid", Config.MethProcessing.SulfAcid)
-				Player.Functions.AddItem("hydrochloric_acid", Config.MethProcessing.HydAcid)
-				TriggerClientEvent('QBCore:Notify', src, Lang:t("error.no_sodium_hydroxide"), "error")
+				Player.Functions.AddItem('sulfuric_acid', 1)
+				Player.Functions.AddItem('hydrochloric_acid', 1)
+				TriggerClientEvent('QBCore:Notify', src, Lang:t('error.no_sodium_hydroxide'), 'error')
 			end
 		else
-			Player.Functions.AddItem("sulfuric_acid", Config.MethProcessing.SulfAcid)
-			TriggerClientEvent('QBCore:Notify', src, Lang:t("error.no_hydrochloric_acid"), "error")
+			Player.Functions.AddItem('sulfuric_acid', 1)
+			TriggerClientEvent('QBCore:Notify', src, Lang:t('error.no_hydrochloric_acid'), 'error')
 		end
 	else
-		TriggerClientEvent('QBCore:Notify', src, Lang:t("error.no_sulfuric_acid"), "error")
+		TriggerClientEvent('QBCore:Notify', src, Lang:t('error.no_sulfuric_acid'), 'error')
 	end
-
 end)
 
-RegisterServerEvent('ps-drugprocessing:processTempUp', function()
+RegisterServerEvent('mrf_drugprocess:processTempUp', function()
 	local src = source
 	local Player = QBCore.Functions.GetPlayer(src)
 
-	if Player.Functions.RemoveItem("liquidmix", 1) then
-		if Player.Functions.AddItem("chemicalvapor", 1) then
-			TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["liquidmix"], "remove")
-			TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["chemicalvapor"], "add")
+	if not Player then return end
+
+	if Player.Functions.RemoveItem('liquidmix', 1) then
+		if Player.Functions.AddItem('chemicalvapor', 1) then
+			TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['liquidmix'], 'remove', 1)
+			TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['chemicalvapor'], 'add', 1)
 		else
-			Player.Functions.AddItem("liquidmix", 1)
+			Player.Functions.AddItem('liquidmix', 1)
 		end
 	else
-		TriggerClientEvent('QBCore:Notify', src, Lang:t("error.no_liquidmix"), "error")
+		TriggerClientEvent('QBCore:Notify', src, Lang:t('error.no_liquidmix'), 'error')
 	end
 end)
 
-RegisterServerEvent('ps-drugprocessing:processTempDown', function()
+RegisterServerEvent('mrf_drugprocess:processTempDown', function()
 	local src = source
 	local Player = QBCore.Functions.GetPlayer(src)
 
-	if Player.Functions.RemoveItem("chemicalvapor", 1) then
-		if Player.Functions.AddItem("methtray", 1) then
-			TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["chemicalvapor"], "remove")
-			TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["methtray"], "add")
+	if not Player then return end
+
+	if Player.Functions.RemoveItem('chemicalvapor', 1) then
+		if Player.Functions.AddItem('methtray', 1) then
+			TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['chemicalvapor'], 'remove', 1)
+			TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['methtray'], 'add', 1)
 		else
-			Player.Functions.AddItem("chemicalvapor", 1)
+			Player.Functions.AddItem('chemicalvapor', 1)
 		end
 	else
-		TriggerClientEvent('QBCore:Notify', src, Lang:t("error.no_chemicalvapor"), "error")
+		TriggerClientEvent('QBCore:Notify', src, Lang:t('error.no_chemicalvapor'), 'error')
 	end
 
 end)
 
-RegisterServerEvent('ps-drugprocessing:processMeth', function()
+RegisterServerEvent('mrf_drugprocess:processMeth', function()
 	local src = source
 	local Player = QBCore.Functions.GetPlayer(src)
-	if Player.Functions.RemoveItem("methtray", 1) then
-		if Player.Functions.AddItem("meth", Config.MethProcessing.Meth) then
-			TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["methtray"], "remove")
-			TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["meth"], "add", Config.MethProcessing.Meth)
-			TriggerClientEvent('QBCore:Notify', src, Lang:t("success.meth"), "success")
+
+	if not Player then return end
+
+	if Player.Functions.RemoveItem('methtray', 1) then
+		if Player.Functions.AddItem('meth', math.random(8, 10)) then
+			TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['methtray'], 'remove', 1)
+			TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['meth'], 'add', 1)
+			TriggerClientEvent('QBCore:Notify', src, Lang:t('success.meth'), 'success')
+			TriggerEvent('qb-log:server:CreateLog', 'methlogs', 'Drug Processing (Meth)', 'pink', ('**Player:** %s | **License:** ||(%s)||\n **Info:** Processed And Received Meth'):format(GetPlayerName(src), Player.PlayerData.license))
 		else
-			Player.Functions.AddItem("methtray", 1)
+			Player.Functions.AddItem('methtray', 1)
 		end
 	else
-		TriggerClientEvent('QBCore:Notify', src, Lang:t("error.no_chemicalvapor"), "error")
+		TriggerClientEvent('QBCore:Notify', src, Lang:t('error.no_chemicalvapor'), 'error')
 	end
 end)
 
-RegisterServerEvent('ps-drugprocessing:processFailUp', function()
+RegisterServerEvent('mrf_drugprocess:processFailUp', function()
 	local src = source
 	local Player = QBCore.Functions.GetPlayer(src)
-	Player.Functions.RemoveItem("liquidmix", 1)
-	TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["liquidmix"], "remove")
-	TriggerClientEvent('QBCore:Notify', src, Lang:t("error.temp_too_high"), "error")
+
+	if not Player then return end
+
+	Player.Functions.RemoveItem('liquidmix', 1)
+	TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['liquidmix'], 'remove', 1)
+	TriggerClientEvent('QBCore:Notify', src, Lang:t('error.temp_too_high'), 'error')
 end)
 
-RegisterServerEvent('ps-drugprocessing:processFailDown', function()
+RegisterServerEvent('mrf_drugprocess:processFailDown', function()
 	local src = source
 	local Player = QBCore.Functions.GetPlayer(src)
 
-	Player.Functions.RemoveItem("chemicalvapor", 1)
-	TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["chemicalvapor"], "remove")
-	TriggerClientEvent('QBCore:Notify', src, Lang:t("error.temp_too_low"), "error")
+	if not Player then return end
+
+	Player.Functions.RemoveItem('chemicalvapor', 1)
+	TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['chemicalvapor'], 'remove', 1)
+	TriggerClientEvent('QBCore:Notify', src, Lang:t('error.temp_too_low'), 'error')
 end)

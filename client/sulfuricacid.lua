@@ -1,7 +1,6 @@
 local spawnedSulfuricAcidBarrels = 0
 local SulfuricAcidBarrels = {}
-local inSulfuricFarm = false
-local QBCore = exports['qb-core']:GetCoreObject()
+inSulfuricFarm = false
 
 local function ValidateSulfuricAcidCoord(plantCoord)
 	local validate = true
@@ -21,7 +20,7 @@ end
 local function GetCoordZSulfuricAcid(x, y)
 	local groundCheckHeights = { 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 150.0 }
 
-	for i, height in ipairs(groundCheckHeights) do
+	for _, height in ipairs(groundCheckHeights) do
 		local foundGround, z = GetGroundZFor_3dCoord(x, y, height)
 
 		if foundGround then
@@ -32,11 +31,11 @@ local function GetCoordZSulfuricAcid(x, y)
 	return 18.31
 end
 
-local function GenerateSulfuricAcidCoords()
+local function GenerateSulfuricAcidCoords(serverCoords)
 	while true do
 		Wait(1)
 
-		local weedCoordX, weedCoordY
+		local sulCoordX, sulCoordY
 
 		math.randomseed(GetGameTimer())
 		local modX = math.random(-7, 7)
@@ -46,11 +45,11 @@ local function GenerateSulfuricAcidCoords()
 		math.randomseed(GetGameTimer())
 		local modY = math.random(-7, 7)
 
-		weedCoordX = Config.CircleZones.SulfuricAcidFarm.coords.x + modX
-		weedCoordY = Config.CircleZones.SulfuricAcidFarm.coords.y + modY
+		sulCoordX = serverCoords.Zones.SulfuricAcidFarm.coords.x + modX
+		sulCoordY = serverCoords.Zones.SulfuricAcidFarm.coords.y + modY
 
-		local coordZ = GetCoordZSulfuricAcid(weedCoordX, weedCoordY)
-		local coord = vector3(weedCoordX, weedCoordY, coordZ)
+		local coordZ = GetCoordZSulfuricAcid(sulCoordX, sulCoordY)
+		local coord = vector3(sulCoordX, sulCoordY, coordZ)
 
 		if ValidateSulfuricAcidCoord(coord) then
 			return coord
@@ -58,16 +57,16 @@ local function GenerateSulfuricAcidCoords()
 	end
 end
 
-local function SpawnSulfuricAcidBarrels()
+function SpawnSulfuricAcidBarrels(serverCoords)
 	local model = `mw_sulfuric_barrel`
 	while spawnedSulfuricAcidBarrels < 10 do
 		Wait(0)
-		local weedCoords = GenerateSulfuricAcidCoords()
+		local sulCoords = GenerateSulfuricAcidCoords(serverCoords)
 		RequestModel(model)
 		while not HasModelLoaded(model) do
 			Wait(100)
 		end
-		local obj = CreateObject(model, weedCoords.x, weedCoords.y, weedCoords.z, false, true, false)
+		local obj = CreateObject(model, sulCoords.x, sulCoords.y, sulCoords.z, false, true, false)
 		PlaceObjectOnGroundProperly(obj)
 		FreezeEntityPosition(obj, true)
 		table.insert(SulfuricAcidBarrels, obj)
@@ -76,8 +75,7 @@ local function SpawnSulfuricAcidBarrels()
 	SetModelAsNoLongerNeeded(model)
 end
 
-
-RegisterNetEvent("ps-drugprocessing:pickSulfuric", function()
+RegisterNetEvent('mrf_drugprocess:pickSulfuric', function()
 	local playerPed = PlayerPedId()
 	local coords = GetEntityCoords(playerPed)
 	local nearbyObject, nearbyID
@@ -92,18 +90,18 @@ RegisterNetEvent("ps-drugprocessing:pickSulfuric", function()
 		if not isPickingUp then
 			isPickingUp = true
 			TaskStartScenarioInPlace(playerPed, 'world_human_gardener_plant', 0, false)
-			QBCore.Functions.Progressbar("search_register", Lang:t("progressbar.collecting"), 10000, false, true, {
+			QBCore.Functions.Progressbar('doing_processing', Lang:t('progressbar.collecting'), 8000, false, true, {
 				disableMovement = true,
 				disableCarMovement = true,
 				disableMouse = false,
 				disableCombat = true,
-			}, {}, {}, {}, function() -- Done
+			}, {}, {}, {}, function()
 				ClearPedTasks(PlayerPedId())
 				SetEntityAsMissionEntity(nearbyObject, false, true)
 				DeleteObject(nearbyObject)
 				table.remove(SulfuricAcidBarrels, nearbyID)
 				spawnedSulfuricAcidBarrels -= 1
-				TriggerServerEvent('ps-drugprocessing:pickedUpSulfuricAcid')
+				TriggerServerEvent('mrf_drugprocess:pickedUpSulfuricAcid')
 				isPickingUp = false
 			end, function()
 				ClearPedTasks(PlayerPedId())
@@ -120,19 +118,4 @@ AddEventHandler('onResourceStop', function(resource)
 			DeleteObject(v)
 		end
 	end
-end)
-
-CreateThread(function()
-	local sulfuricZone = CircleZone:Create(Config.CircleZones.SulfuricAcidFarm.coords, 50.0, {
-		name = "ps-sulfuriczone",
-		debugPoly = false
-	})
-	sulfuricZone:onPlayerInOut(function(isPointInside, point, zone)
-        if isPointInside then
-            inSulfuricFarm = true
-            SpawnSulfuricAcidBarrels()
-        else
-            inSulfuricFarm = false
-        end
-    end)
 end)

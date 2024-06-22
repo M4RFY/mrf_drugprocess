@@ -1,7 +1,7 @@
 local spawnedPoppys = 0
 local PoppyPlants = {}
-local isPickingUp, isProcessing, inHeroinField = false, false, false
-local QBCore = exports['qb-core']:GetCoreObject()
+local isProcessing = false
+inHeroinField = false
 
 local function ValidateHeroinCoord(plantCoord)
 	local validate = true
@@ -21,7 +21,7 @@ end
 local function GetCoordZHeroin(x, y)
 	local groundCheckHeights = { 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 50.0, 75.0, 100.0, 110.0, 125.0 }
 
-	for i, height in ipairs(groundCheckHeights) do
+	for _, height in ipairs(groundCheckHeights) do
 		local foundGround, z = GetGroundZFor_3dCoord(x, y, height)
 
 		if foundGround then
@@ -32,7 +32,7 @@ local function GetCoordZHeroin(x, y)
 	return 12.64
 end
 
-local function GenerateHeroinCoords()
+local function GenerateHeroinCoords(serverCoords)
 	while true do
 		Wait(1)
 
@@ -46,8 +46,8 @@ local function GenerateHeroinCoords()
 		math.randomseed(GetGameTimer())
 		local modY = math.random(-60, 60)
 
-		heroinCoordX = Config.CircleZones.HeroinField.coords.x + modX
-		heroinCoordY = Config.CircleZones.HeroinField.coords.y + modY
+		heroinCoordX = serverCoords.Zones.HeroinField.coords.x + modX
+		heroinCoordY = serverCoords.Zones.HeroinField.coords.y + modY
 
 		local coordZ = GetCoordZHeroin(heroinCoordX, heroinCoordY)
 		local coord = vector3(heroinCoordX, heroinCoordY, coordZ)
@@ -58,11 +58,11 @@ local function GenerateHeroinCoords()
 	end
 end
 
-local function SpawnPoppyPlants()
+function SpawnPoppyPlants(serverCoords)
 	local model = `prop_plant_01b`
 	while spawnedPoppys < 15 do
 		Wait(0)
-		local heroinCoords = GenerateHeroinCoords()
+		local heroinCoords = GenerateHeroinCoords(serverCoords)
 		RequestModel(model)
 		while not HasModelLoaded(model) do
 			Wait(100)
@@ -80,26 +80,15 @@ local function ProcessHeroin()
 	isProcessing = true
 	local playerPed = PlayerPedId()
 
-	TaskStartScenarioInPlace(playerPed, "PROP_HUMAN_PARKING_METER", 0, true)
-	QBCore.Functions.Progressbar("search_register", Lang:t("progressbar.processing"), 15000, false, true, {
+	TaskStartScenarioInPlace(playerPed, 'PROP_HUMAN_PARKING_METER', 0, true)
+	QBCore.Functions.Progressbar('doing_processing', Lang:t('progressbar.processing'), 6000, false, true, {
 		disableMovement = true,
 		disableCarMovement = true,
 		disableMouse = false,
 		disableCombat = true,
 	}, {}, {}, {}, function()
-		TriggerServerEvent('ps-drugprocessing:processPoppyResin')
-
-		local timeLeft = Config.Delays.HeroinProcessing / 1000
-		while timeLeft > 0 do
-			Wait(1000)
-			timeLeft -= 1
-
-			if #(GetEntityCoords(playerPed)-Config.CircleZones.HeroinProcessing.coords) > 4 then
-				TriggerServerEvent('ps-drugprocessing:cancelProcessing')
-				break
-			end
-		end
 		ClearPedTasks(playerPed)
+		TriggerServerEvent('mrf_drugprocess:processPoppyResin')
 		isProcessing = false
 	end, function()
 		ClearPedTasks(playerPed)
@@ -107,34 +96,21 @@ local function ProcessHeroin()
 	end)
 end
 
-RegisterNetEvent('ps-drugprocessing:ProcessPoppy', function()
-	local coords = GetEntityCoords(PlayerPedId(source))
-	
-	if #(coords-Config.CircleZones.HeroinProcessing.coords) < 5 then
-		if not isProcessing then
-			QBCore.Functions.TriggerCallback('ps-drugprocessing:validate_items', function(result)
-				if result.ret then
-					ProcessHeroin()
-				else
-					QBCore.Functions.Notify(Lang:t("error.no_item", {item = result.item}))
-				end
-			end, {poppyresin = Config.HeroinProcessing.Poppy})
-		end
+RegisterNetEvent('mrf_drugprocess:ProcessPoppy', function()
+	if not isProcessing then
+		if not GetItem({poppyresin = 1}) then return end
+		ProcessHeroin()
+	else
+		QBCore.Functions.Notify(Lang:t('error.already_processing'), 'error')
 	end
 end)
 
-RegisterNetEvent("ps-drugprocessing:processHeroin",function()
-	QBCore.Functions.TriggerCallback('ps-drugprocessing:validate_items', function(result)
-		if result.ret then
-			ProcessHeroin()
-		else
-			QBCore.Functions.Notify(Lang:t("error.no_item", {item = result.item}))
-		end
-	end, {poppyresin = Config.HeroinProcessing.Poppy})
+RegisterNetEvent('mrf_drugprocess:processHeroin',function()
+	if not GetItem({poppyresin = 1}) then return end
+	ProcessHeroin()
 end)
 
-
-RegisterNetEvent("ps-drugprocessing:pickHeroin", function()
+RegisterNetEvent('mrf_drugprocess:pickHeroin', function()
 	local playerPed = PlayerPedId()
 	local coords = GetEntityCoords(playerPed)
 	local nearbyObject, nearbyID
@@ -146,27 +122,21 @@ RegisterNetEvent("ps-drugprocessing:pickHeroin", function()
 	end
 
 	if nearbyObject and IsPedOnFoot(playerPed) then
-		isPickingUp = true
 		TaskStartScenarioInPlace(playerPed, 'world_human_gardener_plant', 0, false)
-		QBCore.Functions.Progressbar("search_register", Lang:t("progressbar.collecting"), 10000, false, true, {
+		QBCore.Functions.Progressbar('doing_processing', Lang:t('progressbar.collecting'), 8000, false, true, {
 			disableMovement = true,
 			disableCarMovement = true,
 			disableMouse = false,
 			disableCombat = true,
-		}, {}, {}, {}, function() -- Done
+		}, {}, {}, {}, function()
 			ClearPedTasks(playerPed)
 			SetEntityAsMissionEntity(nearbyObject, false, true)
 			DeleteObject(nearbyObject)
-
 			table.remove(PoppyPlants, nearbyID)
 			spawnedPoppys -= 1
-
-			TriggerServerEvent('ps-drugprocessing:pickedUpPoppy')
-			isPickingUp = false
-
+			TriggerServerEvent('mrf_drugprocess:pickedUpPoppy')
 		end, function()
 			ClearPedTasks(playerPed)
-			isPickingUp = false
 		end)
 	end
 end)
@@ -178,19 +148,4 @@ AddEventHandler('onResourceStop', function(resource)
 			DeleteObject(v)
 		end
 	end
-end)
-
-CreateThread(function()
-	local heroinZone = CircleZone:Create(Config.CircleZones.HeroinField.coords, 50.0, {
-		name = "ps-heroinzone",
-		debugPoly = false
-	})
-	heroinZone:onPlayerInOut(function(isPointInside, point, zone)
-        if isPointInside then
-            inHeroinField = true
-            SpawnPoppyPlants()
-        else
-            inHeroinField = false
-        end
-    end)
 end)

@@ -1,8 +1,6 @@
 local spawnedHydrochloricAcidBarrels = 0
 local HydrochloricAcidBarrels = {}
-local inhydrochloricField = false
-local QBCore = exports['qb-core']:GetCoreObject()
-
+inhydrochloricField = false
 
 local function ValidateHydrochloricAcidCoord(plantCoord)
 	local validate = true
@@ -33,11 +31,11 @@ local function GetCoordZHydrochloricAcid(x, y)
 	return 24.5
 end
 
-local function GenerateHydrochloricAcidCoords()
+local function GenerateHydrochloricAcidCoords(serverCoords)
 	while true do
 		Wait(1)
 
-		local weed2CoordX, weed2CoordY
+		local hydroCoordX, hydroCoordY
 
 		math.randomseed(GetGameTimer())
 		local modX2 = math.random(-15, 15)
@@ -47,11 +45,11 @@ local function GenerateHydrochloricAcidCoords()
 		math.randomseed(GetGameTimer())
 		local modY2 = math.random(-15, 15)
 
-		weed2CoordX = Config.CircleZones.HydrochloricAcidFarm.coords.x + modX2
-		weed2CoordY = Config.CircleZones.HydrochloricAcidFarm.coords.y + modY2
+		hydroCoordX = serverCoords.Zones.HydrochloricAcidFarm.coords.x + modX2
+		hydroCoordY = serverCoords.Zones.HydrochloricAcidFarm.coords.y + modY2
 
-		local coordZ2 = GetCoordZHydrochloricAcid(weed2CoordX, weed2CoordY)
-		local coord2 = vector3(weed2CoordX, weed2CoordY, coordZ2)
+		local coordZ2 = GetCoordZHydrochloricAcid(hydroCoordX, hydroCoordY)
+		local coord2 = vector3(hydroCoordX, hydroCoordY, coordZ2)
 
 		if ValidateHydrochloricAcidCoord(coord2) then
 			return coord2
@@ -59,16 +57,16 @@ local function GenerateHydrochloricAcidCoords()
 	end
 end
 
-local function SpawnHydrochloricAcidBarrels()
+function SpawnHydrochloricAcidBarrels(serverCoords)
 	local model = `mw_hydro_barrel`
 	while spawnedHydrochloricAcidBarrels < 5 do
 		Wait(0)
-		local weedCoords = GenerateHydrochloricAcidCoords()
+		local hydroCoords = GenerateHydrochloricAcidCoords(serverCoords)
 		RequestModel(model)
 		while not HasModelLoaded(model) do
 			Wait(100)
 		end
-		local obj = CreateObject(model, weedCoords.x, weedCoords.y, weedCoords.z, false, true, false)
+		local obj = CreateObject(model, hydroCoords.x, hydroCoords.y, hydroCoords.z, false, true, false)
 		PlaceObjectOnGroundProperly(obj)
 		FreezeEntityPosition(obj, true)
 		table.insert(HydrochloricAcidBarrels, obj)
@@ -77,7 +75,7 @@ local function SpawnHydrochloricAcidBarrels()
 	SetModelAsNoLongerNeeded(model)
 end
 
-RegisterNetEvent("ps-drugprocessing:client:hydrochloricacid", function()
+RegisterNetEvent('mrf_drugprocess:client:hydrochloricacid', function()
 	local playerPed = PlayerPedId()
 	local coords = GetEntityCoords(playerPed)
 	local nearbyObject, nearbyID
@@ -91,7 +89,7 @@ RegisterNetEvent("ps-drugprocessing:client:hydrochloricacid", function()
 	if nearbyObject and IsPedOnFoot(playerPed) then
 		isPickingUp = true
 		TaskStartScenarioInPlace(playerPed, 'world_human_gardener_plant', 0, false)
-		QBCore.Functions.Progressbar("search_register", Lang:t("progressbar.collecting"), 10000, false, true, {
+		QBCore.Functions.Progressbar('doing_processing', Lang:t('progressbar.collecting'), 8000, false, true, {
 			disableMovement = true,
 			disableCarMovement = true,
 			disableMouse = false,
@@ -100,11 +98,9 @@ RegisterNetEvent("ps-drugprocessing:client:hydrochloricacid", function()
 			ClearPedTasks(playerPed)
 			SetEntityAsMissionEntity(nearbyObject, false, true)
 			DeleteObject(nearbyObject)
-
 			table.remove(HydrochloricAcidBarrels, nearbyID)
 			spawnedHydrochloricAcidBarrels -= 1
-
-			TriggerServerEvent('ps-drugprocessing:pickedUpHydrochloricAcid')
+			TriggerServerEvent('mrf_drugprocess:pickedUpHydrochloricAcid')
 			isPickingUp = false
 		end, function()
 			ClearPedTasks(playerPed)
@@ -120,19 +116,4 @@ AddEventHandler('onResourceStop', function(resource)
 			DeleteObject(v)
 		end
 	end
-end)
-
-CreateThread(function()
-	local hydrochloricZone = CircleZone:Create(Config.CircleZones.HydrochloricAcidFarm.coords, 50.0, {
-		name = "ps-hydrochloriczone",
-		debugPoly = false
-	})
-	hydrochloricZone:onPlayerInOut(function(isPointInside, point, zone)
-        if isPointInside then
-            inhydrochloricField = true
-            SpawnHydrochloricAcidBarrels()
-        else
-            inhydrochloricField = false
-        end
-    end)
 end)

@@ -1,56 +1,54 @@
-local QBCore = exports['qb-core']:GetCoreObject()
-local inChemicalField = false
 local SpawnedChemicals = 0
 local Chemicals = {}
+inChemicalField = false
 
--- Chemical Menu Trigger & Menu Button Triggers --
 local function createChemicalMenu()
     local chemMenu = {
         {
             isHeader = true,
-            header = Lang:t("menu.chemMenuHeader")
+            header = Lang:t('menu.chemMenuHeader'),
+			params = {}
         },
         {
-            header = Lang:t("items.hydrochloric_acid"),
-            txt = Lang:t("menu.chemicals"),
+            header = Lang:t('items.hydrochloric_acid'),
+            txt = Lang:t('menu.chemicals'),
 			params = {
-                event = "ps-drugprocessing:hydrochloric_acid",
+                event = 'mrf_drugprocess:hydrochloric_acid',
             }
         },
         {
-            header = Lang:t("items.sodium_hydroxide"),
-            txt = Lang:t("menu.chemicals"),
+            header = Lang:t('items.sodium_hydroxide'),
+            txt = Lang:t('menu.chemicals'),
 			params = {
-                event = "ps-drugprocessing:sodium_hydroxide",
+                event = 'mrf_drugprocess:sodium_hydroxide',
             }
         },
         {
-            header = Lang:t("items.sulfuric_acid"),
-            txt = Lang:t("menu.chemicals"),
+            header = Lang:t('items.sulfuric_acid'),
+            txt = Lang:t('menu.chemicals'),
 			params = {
-                event = "ps-drugprocessing:sulfuric_acid",
+                event = 'mrf_drugprocess:sulfuric_acid',
             }
         },
         {
-			header = Lang:t("items.lsa"),
-            txt = Lang:t("menu.chemicals"),
+			header = Lang:t('items.lsa'),
+            txt = Lang:t('menu.chemicals'),
 			params = {
-                event = "ps-drugprocessing:lsa",
+                event = 'mrf_drugprocess:lsa',
             }
         },
         {
-            header = Lang:t("menu.close"),
-			txt = Lang:t("menu.closetxt"),
+            header = Lang:t('menu.close'),
+			txt = Lang:t('menu.closetxt'),
 			params = {
                 event = exports['qb-menu']:closeMenu(),
             }
-        },
+        }
     }
     exports['qb-menu']:openMenu(chemMenu)
 end
-RegisterNetEvent('ps-drugprocessing:chemicalmenu', createChemicalMenu)
+RegisterNetEvent('mrf_drugprocess:chemicalmenu', createChemicalMenu)
 
---------------------------------------------------------------------
 local function ValidatechemicalsCoord(plantCoord)
 	local validate = true
 	if SpawnedChemicals > 0 then
@@ -79,7 +77,7 @@ local function GetCoordZChemicals(x, y)
 	return 5.9
 end
 
-local function GeneratechemicalsCoords()
+local function GeneratechemicalsCoords(serverCoords)
 	while inChemicalField do
 		Wait(1)
 
@@ -93,8 +91,8 @@ local function GeneratechemicalsCoords()
 		math.randomseed(GetGameTimer())
 		local modY = math.random(-20, 20)
 
-		chemicalsCoordX = Config.CircleZones.ChemicalsField.coords.x + modX
-		chemicalsCoordY = Config.CircleZones.ChemicalsField.coords.y + modY
+		chemicalsCoordX = serverCoords.Zones.ChemicalFarm.coords.x + modX
+		chemicalsCoordY = serverCoords.Zones.ChemicalFarm.coords.y + modY
 
 		local coordZ = GetCoordZChemicals(chemicalsCoordX, chemicalsCoordY)
 		local coord = vector3(chemicalsCoordX, chemicalsCoordY, coordZ)
@@ -105,11 +103,11 @@ local function GeneratechemicalsCoords()
 	end
 end
 
-local function SpawnChemicals()
+function SpawnChemicals(serverCoords)
 	local model = `mw_chemical_barrel`
 	while SpawnedChemicals < 10 do
 		Wait(0)
-		local chemicalsCoords = GeneratechemicalsCoords()
+		local chemicalsCoords = GeneratechemicalsCoords(serverCoords)
 		RequestModel(model)
 		while not HasModelLoaded(model) do
 			Wait(100)
@@ -123,30 +121,20 @@ local function SpawnChemicals()
 	SetModelAsNoLongerNeeded(model)
 end
 
-local function process_hydrochloric_acid()
+local function ProcessHydrochloric()
 	isProcessing = true
 	local playerPed = PlayerPedId()
 
-	TaskStartScenarioInPlace(playerPed, "PROP_HUMAN_PARKING_METER", 0, true)
+	TaskStartScenarioInPlace(playerPed, 'PROP_HUMAN_PARKING_METER', 0, true)
 
-	QBCore.Functions.Progressbar("search_register", Lang:t("progressbar.processing"), 15000, false, true, {
+	QBCore.Functions.Progressbar('doing_processing', Lang:t('progressbar.processing'), 6000, false, true, {
 		disableMovement = true,
 		disableCarMovement = true,
 		disableMouse = false,
 		disableCombat = true,
 	}, {}, {}, {}, function()
-		TriggerServerEvent('ps-drugprocessing:processHydrochloric_acid')
-
-		local timeLeft = Config.Delays.thionylchlorideProcessing / 1000
-		while timeLeft > 0 do
-			Wait(1000)
-			timeLeft -= 1
-			if #(GetEntityCoords(playerPed)-Config.CircleZones.ChemicalsConvertionMenu.coords) > 4 then
-				TriggerServerEvent('ps-drugprocessing:cancelProcessing')
-				break
-			end
-		end
 		ClearPedTasks(playerPed)
+		TriggerServerEvent('mrf_drugprocess:processHydrochloricAcid')
 		isProcessing = false
 	end, function()
 		ClearPedTasks(playerPed)
@@ -154,29 +142,19 @@ local function process_hydrochloric_acid()
 	end)
 end
 
-local function process_lsa()
+local function ProcessLsa()
 	isProcessing = true
 	local playerPed = PlayerPedId()
-	
-	TaskStartScenarioInPlace(playerPed, "PROP_HUMAN_PARKING_METER", 0, true)
-	QBCore.Functions.Progressbar("search_register", Lang:t("progressbar.processing"), 15000, false, true, {
+
+	TaskStartScenarioInPlace(playerPed, 'PROP_HUMAN_PARKING_METER', 0, true)
+	QBCore.Functions.Progressbar('doing_processing', Lang:t('progressbar.processing'), 6000, false, true, {
 		disableMovement = true,
 		disableCarMovement = true,
 		disableMouse = false,
 		disableCombat = true,
 	}, {}, {}, {}, function()
-		TriggerServerEvent('ps-drugprocessing:process_lsa')
-
-		local timeLeft = Config.Delays.thionylchlorideProcessing / 1000
-		while timeLeft > 0 do
-			Wait(1000)
-			timeLeft -= 1
-			if #(GetEntityCoords(playerPed)-Config.CircleZones.ChemicalsConvertionMenu.coords) > 4 then
-				TriggerServerEvent('ps-drugprocessing:cancelProcessing')
-				break
-			end
-		end
 		ClearPedTasks(playerPed)
+		TriggerServerEvent('mrf_drugprocess:processLsa')
 		isProcessing = false
 	end, function()
 		ClearPedTasks(playerPed)
@@ -184,29 +162,19 @@ local function process_lsa()
 	end)
 end
 
-local function process_sulfuric_acid()
+local function ProcessSulfuric()
 	isProcessing = true
 	local playerPed = PlayerPedId()
 
-	TaskStartScenarioInPlace(playerPed, "PROP_HUMAN_PARKING_METER", 0, true)
-	QBCore.Functions.Progressbar("search_register", Lang:t("progressbar.processing"), 15000, false, true, {
+	TaskStartScenarioInPlace(playerPed, 'PROP_HUMAN_PARKING_METER', 0, true)
+	QBCore.Functions.Progressbar('doing_processing', Lang:t('progressbar.processing'), 6000, false, true, {
 		disableMovement = true,
 		disableCarMovement = true,
 		disableMouse = false,
 		disableCombat = true,
 	}, {}, {}, {}, function()
-		TriggerServerEvent('ps-drugprocessing:processprocess_sulfuric_acid')
-
-		local timeLeft = Config.Delays.thionylchlorideProcessing / 1000
-		while timeLeft > 0 do
-			Wait(1000)
-			timeLeft -= 1
-			if #(GetEntityCoords(playerPed)-Config.CircleZones.ChemicalsConvertionMenu.coords) > 4 then
-				TriggerServerEvent('ps-drugprocessing:cancelProcessing')
-				break
-			end
-		end
 		ClearPedTasks(playerPed)
+		TriggerServerEvent('mrf_drugprocess:processprocessSulfuricAcid')
 		isProcessing = false
 	end, function()
 		ClearPedTasks(playerPed)
@@ -214,32 +182,22 @@ local function process_sulfuric_acid()
 	end)
 end
 
-local function process_sodium_hydroxide()
+local function ProcessSodiumHydroxide()
 	isProcessing = true
 	local playerPed = PlayerPedId()
 
-	TaskStartScenarioInPlace(playerPed, "PROP_HUMAN_PARKING_METER", 0, true)
-	QBCore.Functions.Progressbar("search_register", Lang:t("progressbar.processing"), 15000, false, true, {
+	TaskStartScenarioInPlace(playerPed, 'PROP_HUMAN_PARKING_METER', 0, true)
+	QBCore.Functions.Progressbar('doing_processing', Lang:t('progressbar.processing'), 6000, false, true, {
 		disableMovement = true,
 		disableCarMovement = true,
 		disableMouse = false,
 		disableCombat = true,
 	}, {}, {}, {}, function()
-		TriggerServerEvent('ps-drugprocessing:processsodium_hydroxide')
-
-		local timeLeft = Config.Delays.thionylchlorideProcessing / 1000
-		while timeLeft > 0 do
-			Wait(1000)
-			timeLeft -= 1
-			if #(GetEntityCoords(playerPed)-Config.CircleZones.ChemicalsConvertionMenu.coords) > 4 then
-				TriggerServerEvent('ps-drugprocessing:cancelProcessing')
-				break
-			end
-		end
-		ClearPedTasks(PlayerPedId())
+		ClearPedTasks(playerPed)
+		TriggerServerEvent('mrf_drugprocess:processsodiumHydroxide')
 		isProcessing = false
 	end, function()
-		ClearPedTasks(PlayerPedId())
+		ClearPedTasks(playerPed)
 		isProcessing = false
 	end)
 end
@@ -253,47 +211,27 @@ AddEventHandler('onResourceStop', function(resource)
 	end
 end)
 
-RegisterNetEvent("ps-drugprocessing:hydrochloric_acid", function()
-    QBCore.Functions.TriggerCallback('ps-drugprocessing:validate_items', function(result)
-		if result then
-			process_hydrochloric_acid()
-		else
-			QBCore.Functions.Notify(Lang:t("error.no_chemicals"), 'error')
-		end
-	end, {chemicals = 1})
+RegisterNetEvent('mrf_drugprocess:hydrochloric_acid', function()
+	if not GetItem({chemicals = 1}) then return end
+	ProcessHydrochloric()
 end)
 
-RegisterNetEvent("ps-drugprocessing:lsa", function()
-    QBCore.Functions.TriggerCallback('ps-drugprocessing:validate_items', function(result)
-		if result then
-			process_lsa()
-		else
-			QBCore.Functions.Notify(Lang:t("error.no_chemicals"), 'error')
-		end
-	end, {chemicals = 1})
+RegisterNetEvent('mrf_drugprocess:lsa', function()
+	if not GetItem({chemicals = 1}) then return end
+	ProcessLsa()
 end)
 
-RegisterNetEvent("ps-drugprocessing:sulfuric_acid", function()
-    QBCore.Functions.TriggerCallback('ps-drugprocessing:validate_items', function(result)
-		if result then
-			process_sulfuric_acid()
-		else
-			QBCore.Functions.Notify(Lang:t("error.no_chemicals"), 'error')
-		end
-	end, {chemicals = 1})
+RegisterNetEvent('mrf_drugprocess:sulfuric_acid', function()
+	if not GetItem({chemicals = 1}) then return end
+	ProcessSulfuric()
 end)
 
-RegisterNetEvent("ps-drugprocessing:sodium_hydroxide", function()
-    QBCore.Functions.TriggerCallback('ps-drugprocessing:validate_items', function(result)
-		if result then
-			process_sodium_hydroxide()
-		else
-			QBCore.Functions.Notify(Lang:t("error.no_chemicals"), 'error')
-		end
-	end, {chemicals=1})
+RegisterNetEvent('mrf_drugprocess:sodium_hydroxide', function()
+	if not GetItem({chemicals = 1}) then return end
+	ProcessSodiumHydroxide()
 end)
 
-RegisterNetEvent("ps-drugprocessing:pickChemicals", function()
+RegisterNetEvent('mrf_drugprocess:pickChemicals', function()
 	local playerPed = PlayerPedId()
 	local coords = GetEntityCoords(playerPed)
 	local nearbyObject, nearbyID
@@ -307,41 +245,22 @@ RegisterNetEvent("ps-drugprocessing:pickChemicals", function()
 	if nearbyObject and IsPedOnFoot(playerPed) then
 		isPickingUp = true
 		TaskStartScenarioInPlace(playerPed, 'world_human_gardener_plant', 0, false)
-
-		QBCore.Functions.Progressbar("search_register", Lang:t("progressbar.pickup_chemicals"), 10000, false, true, {
+		QBCore.Functions.Progressbar('doing_processing', Lang:t('progressbar.pickup_chemicals'), 8000, false, true, {
 			disableMovement = true,
 			disableCarMovement = true,
 			disableMouse = false,
 			disableCombat = true,
-		}, {}, {}, {}, function() -- Done
+		}, {}, {}, {}, function()
 			ClearPedTasks(playerPed)
 			SetEntityAsMissionEntity(nearbyObject, false, true)
 			DeleteObject(nearbyObject)
-
 			table.remove(Chemicals, nearbyID)
 			SpawnedChemicals -= 1
-
-			TriggerServerEvent('ps-drugprocessing:pickedUpChemicals')
+			TriggerServerEvent('mrf_drugprocess:pickedUpChemicals')
 			isPickingUp = false
-
 		end, function()
 			ClearPedTasks(playerPed)
 			isPickingUp = false
 		end)
 	end
-end)
-
-CreateThread(function()
-	local chemZone = CircleZone:Create(Config.CircleZones.ChemicalsField.coords, 50.0, {
-		name = "ps-chemzone",
-		debugPoly = false
-	})
-	chemZone:onPlayerInOut(function(isPointInside, point, zone)
-        if isPointInside then
-            inChemicalField = true
-            SpawnChemicals()
-        else
-            inChemicalField = false
-        end
-    end)
 end)

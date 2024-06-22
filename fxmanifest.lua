@@ -1,46 +1,32 @@
 fx_version 'cerulean'
-
-games { 'gta5' }
-
+game 'gta5'
 lua54 'yes'
 
-description 'QB Drug Trafficing by Project Sloth'
-
-version '1.4.1'
+description 'Simple drug processing system for FiveM'
+version '1.5.0'
 
 shared_scripts {
-	'@PolyZone/client.lua',
+    '@PolyZone/client.lua',
     '@PolyZone/CircleZone.lua',
-	'@qb-core/shared/locale.lua',
-	'config.lua',
-	'locales/en.lua'
+    '@ox_lib/init.lua',
+    '@qb-core/shared/locale.lua',
+    'locales/en.lua'
 }
 
 server_scripts {
-	'server/coke.lua',
-	'server/lsd.lua',
-	'server/meth.lua',
-	'server/weed.lua',
-	'server/heroin.lua',
-	'server/chemicals.lua',
-	'server/versioncheck.lua'
+    'sv_config.lua',
+    'server/main.lua',
+    'server/*.lua'
 }
 
 client_scripts {
-	'client/weed.lua',
-	'client/meth.lua',
-	'client/coke.lua',
-	'client/lsd.lua',
-	'client/heroin.lua',
-	'client/chemicals.lua',
-	'client/hydrochloricacid.lua',
-	'client/sodiumhydroxide.lua',
-	'client/sulfuricacid.lua',
-	'client/target.lua',
+    'client/functions.lua',
+    'client/main.lua',
+    'client/*.lua'
 }
 
 files {
-	'stream/mw_props.ytyp'
+    'stream/mw_props.ytyp'
 }
 
 data_file 'DLC_ITYP_REQUEST' 'stream/mw_props.ytyp'

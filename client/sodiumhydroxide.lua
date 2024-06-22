@@ -1,7 +1,6 @@
 local spawnedSodiumHydroxideBarrels = 0
 local SodiumHydroxideBarrels = {}
-local inSodiumFarm = false
-local QBCore = exports['qb-core']:GetCoreObject()
+inSodiumFarm = false
 
 local function ValidateSodiumHydroxideCoord(plantCoord)
 	local validate2 = true
@@ -32,11 +31,11 @@ local function GetCoordZSodiumHydroxide(x, y)
 	return 100.0
 end
 
-local function GenerateSodiumHydroxideCoords()
+local function GenerateSodiumHydroxideCoords(serverCoords)
 	while true do
 		Wait(1)
 
-		local weed3CoordX, weed3CoordY
+		local sodiCoordX, sodiCoordY
 
 		math.randomseed(GetGameTimer())
 		local modX3 = math.random(-7, 7)
@@ -46,11 +45,11 @@ local function GenerateSodiumHydroxideCoords()
 		math.randomseed(GetGameTimer())
 		local modY3 = math.random(-7, 7)
 
-		weed3CoordX = Config.CircleZones.SodiumHydroxideFarm.coords.x + modX3
-		weed3CoordY = Config.CircleZones.SodiumHydroxideFarm.coords.y + modY3
+		sodiCoordX = serverCoords.Zones.SodiumHydroxideFarm.coords.x + modX3
+		sodiCoordY = serverCoords.Zones.SodiumHydroxideFarm.coords.y + modY3
 
-		local coordZ3 = GetCoordZSodiumHydroxide(weed3CoordX, weed3CoordY)
-		local coord3 = vector3(weed3CoordX, weed3CoordY, coordZ3)
+		local coordZ3 = GetCoordZSodiumHydroxide(sodiCoordX, sodiCoordY)
+		local coord3 = vector3(sodiCoordX, sodiCoordY, coordZ3)
 
 		if ValidateSodiumHydroxideCoord(coord3) then
 			return coord3
@@ -58,16 +57,16 @@ local function GenerateSodiumHydroxideCoords()
 	end
 end
 
-local function SpawnSodiumHydroxideBarrels()
+function SpawnSodiumHydroxideBarrels(serverCoords)
 	local model = `mw_sodium_barrel`
 	while spawnedSodiumHydroxideBarrels < 10 do
 		Wait(0)
-		local weedCoords2 = GenerateSodiumHydroxideCoords()
+		local sodiumCoords = GenerateSodiumHydroxideCoords(serverCoords)
 		RequestModel(model)
 		while not HasModelLoaded(model) do
 			Wait(100)
 		end
-		local obj = CreateObject(model, weedCoords2.x, weedCoords2.y, weedCoords2.z, false, true, false)
+		local obj = CreateObject(model, sodiumCoords.x, sodiumCoords.y, sodiumCoords.z, false, true, false)
 		PlaceObjectOnGroundProperly(obj)
 		FreezeEntityPosition(obj, true)
 		table.insert(SodiumHydroxideBarrels, obj)
@@ -76,8 +75,7 @@ local function SpawnSodiumHydroxideBarrels()
 	SetModelAsNoLongerNeeded(model)
 end
 
-
-RegisterNetEvent("ps-drugprocessing:pickSodium", function()
+RegisterNetEvent('mrf_drugprocess:pickSodium', function()
 	local playerPe3 = PlayerPedId()
 	local coords = GetEntityCoords(playerPe3)
 	local nearbyObject3, nearbyID3
@@ -92,7 +90,7 @@ RegisterNetEvent("ps-drugprocessing:pickSodium", function()
 		if not isPickingUp then
 			isPickingUp = true
 			TaskStartScenarioInPlace(playerPe3, 'world_human_gardener_plant', 0, false)
-			QBCore.Functions.Progressbar("search_register", Lang:t("progressbar.collecting"), 10000, false, true, {
+			QBCore.Functions.Progressbar('doing_processing', Lang:t('progressbar.collecting'), 8000, false, true, {
 				disableMovement = true,
 				disableCarMovement = true,
 				disableMouse = false,
@@ -101,11 +99,9 @@ RegisterNetEvent("ps-drugprocessing:pickSodium", function()
 				ClearPedTasks(PlayerPedId())
 				SetEntityAsMissionEntity(nearbyObject3, false, true)
 				DeleteObject(nearbyObject3)
-
 				table.remove(SodiumHydroxideBarrels, nearbyID3)
 				spawnedSodiumHydroxideBarrels -= 1
-
-				TriggerServerEvent('ps-drugprocessing:pickedUpSodiumHydroxide')
+				TriggerServerEvent('mrf_drugprocess:pickedUpSodiumHydroxide')
 				isPickingUp = false
 			end, function()
 				ClearPedTasks(PlayerPedId())
@@ -122,19 +118,4 @@ AddEventHandler('onResourceStop', function(resource)
 			DeleteObject(v)
 		end
 	end
-end)
-
-CreateThread(function()
-	local sodiumZone = CircleZone:Create(Config.CircleZones.SodiumHydroxideFarm.coords, 50.0, {
-		name = "ps-sodiumzone",
-		debugPoly = false
-	})
-	sodiumZone:onPlayerInOut(function(isPointInside, point, zone)
-        if isPointInside then
-            inSodiumFarm = true
-            SpawnSodiumHydroxideBarrels()
-        else
-            inSodiumFarm = false
-        end
-    end)
 end)

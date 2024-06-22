@@ -1,69 +1,71 @@
-local QBCore = exports['qb-core']:GetCoreObject()
-
-RegisterServerEvent('ps-drugprocessing:pickedUpCocaLeaf', function()
+RegisterServerEvent('mrf_drugprocess:pickedUpCocaLeaf', function()
 	local src = source
 	local Player = QBCore.Functions.GetPlayer(src)
 
-	if Player.Functions.AddItem("coca_leaf", 1) then 
-		TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["coca_leaf"], "add")
-		TriggerClientEvent('QBCore:Notify', src, Lang:t("success.coca_leaf"), "success")
+	if Player.Functions.AddItem('coca_leaf', 1) then
+		TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['coca_leaf'], 'add', 1)
+		TriggerClientEvent('QBCore:Notify', src, Lang:t('success.coca_leaf'), 'success')
+		TriggerEvent('qb-log:server:CreateLog', 'cokelogs', 'Drug Processing (Coke)', 'pink', ('**Player:** %s | **License:** ||(%s)||\n **Info:** Collected Coke Leaf From Coke Location'):format(GetPlayerName(src), Player.PlayerData.license))
 	else
-		TriggerClientEvent('QBCore:Notify', src, Lang:t("error.no_coca_leaf"), "error")
+		TriggerClientEvent('QBCore:Notify', src, Lang:t('error.no_coca_leaf'), 'error')
 	end
 end)
 
-RegisterServerEvent('ps-drugprocessing:processCocaLeaf', function()
+RegisterServerEvent('mrf_drugprocess:processCocaLeaf', function()
 	local src = source
     local Player = QBCore.Functions.GetPlayer(src)
 
-	if Player.Functions.RemoveItem('coca_leaf', Config.CokeProcessing.CokeLeaf) then
-		if Player.Functions.AddItem('coke', Config.CokeProcessing.ProcessCokeLeaf) then
-			TriggerClientEvent("inventory:client:ItemBox", source, QBCore.Shared.Items['coca_leaf'], "remove", Config.CokeProcessing.CokeLeaf)
-			TriggerClientEvent("inventory:client:ItemBox", source, QBCore.Shared.Items['coke'], "add", Config.CokeProcessing.ProcessCokeLeaf)
-			TriggerClientEvent('QBCore:Notify', src, Lang:t("success.coke"), "success")
+	if Player.Functions.RemoveItem('coca_leaf', 1) then
+		if Player.Functions.AddItem('coke', 1) then
+			TriggerClientEvent('qb-inventory:client:ItemBox', source, QBCore.Shared.Items['coca_leaf'], 'remove', 1)
+			TriggerClientEvent('qb-inventory:client:ItemBox', source, QBCore.Shared.Items['coke'], 'add', 1)
+			TriggerClientEvent('QBCore:Notify', src, Lang:t('success.coke'), 'success')
+			TriggerEvent('qb-log:server:CreateLog', 'cokelogs', 'Drug Processing (Coke)', 'pink', ('**Player:** %s | **License:** ||(%s)||\n **Info:** Processed Coke Leaf Into Coke'):format(GetPlayerName(src), Player.PlayerData.license))
 		else
-			Player.Functions.AddItem('coca_leaf', Config.CokeProcessing.CokeLeaf)
+			Player.Functions.AddItem('coca_leaf', 1)
 		end
 	else
-		TriggerClientEvent('QBCore:Notify', src, Lang:t("error.no_coca_leaf"), "error")
+		TriggerClientEvent('QBCore:Notify', src, Lang:t('error.no_coca_leaf'), 'error')
 	end
 end)
 
-RegisterServerEvent('ps-drugprocessing:processCocaPowder', function()
+RegisterServerEvent('mrf_drugprocess:processCocaPowder', function()
 	local src = source
     local Player = QBCore.Functions.GetPlayer(src)
 
-	if Player.Functions.RemoveItem('coke', Config.CokeProcessing.Coke) then
-		if Player.Functions.RemoveItem('bakingsoda', Config.CokeProcessing.BakingSoda) then
-			if Player.Functions.AddItem('coke_small_brick', Config.CokeProcessing.SmallCokeBrick) then
-				TriggerClientEvent("inventory:client:ItemBox", source, QBCore.Shared.Items['coke'], "remove", Config.CokeProcessing.Coke)
-				TriggerClientEvent("inventory:client:ItemBox", source, QBCore.Shared.Items['bakingsoda'], "remove", Config.CokeProcessing.BakingSoda)
-				TriggerClientEvent("inventory:client:ItemBox", source, QBCore.Shared.Items['coke_small_brick'], "add", Config.CokeProcessing.SmallCokeBrick)
-				TriggerClientEvent('QBCore:Notify', src, Lang:t("success.coke_small_brick"), "success")
+	if Player.Functions.RemoveItem('coke', 1) then
+		if Player.Functions.RemoveItem('bakingsoda', 1) then
+			if Player.Functions.AddItem('coke_small_brick', 1) then
+				TriggerClientEvent('qb-inventory:client:ItemBox', source, QBCore.Shared.Items['coke'], 'remove', 1)
+				TriggerClientEvent('qb-inventory:client:ItemBox', source, QBCore.Shared.Items['bakingsoda'], 'remove', 1)
+				TriggerClientEvent('qb-inventory:client:ItemBox', source, QBCore.Shared.Items['coke_small_brick'], 'add', 1)
+				TriggerClientEvent('QBCore:Notify', src, Lang:t('success.coke_small_brick'), 'success')
+				TriggerEvent('qb-log:server:CreateLog', 'cokelogs', 'Drug Processing (Coke)', 'pink', ('**Player:** %s | **License:** ||(%s)||\n **Info:** Processed Coke Into Small Brick'):format(GetPlayerName(src), Player.PlayerData.license))
 			else
-				Player.Functions.AddItem('coke', Config.CokeProcessing.Coke)
-				Player.Functions.AddItem('bakingsoda', Config.CokeProcessing.BakingSoda)
+				Player.Functions.AddItem('coke', 1)
+				Player.Functions.AddItem('bakingsoda', 1)
 			end
 		else
-			Player.Functions.AddItem('coke', Config.CokeProcessing.Coke)
-			TriggerClientEvent('QBCore:Notify', src, Lang:t("error.no_bakingsoda"), "error")
+			Player.Functions.AddItem('coke', 1)
+			TriggerClientEvent('QBCore:Notify', src, Lang:t('error.no_bakingsoda'), 'error')
 		end
 	else
-		TriggerClientEvent('QBCore:Notify', src, Lang:t("error.no_cokain"), "error")
+		TriggerClientEvent('QBCore:Notify', src, Lang:t('error.no_cokain'), 'error')
 	end
 end)
 
-RegisterServerEvent('ps-drugprocessing:processCocaBrick', function()
+RegisterServerEvent('mrf_drugprocess:processCocaBrick', function()
 	local src = source
     local Player = QBCore.Functions.GetPlayer(src)
 
-	if Player.Functions.RemoveItem('coke_small_brick', Config.CokeProcessing.SmallBrick) then
-		if Player.Functions.AddItem('coke_brick', Config.CokeProcessing.LargeBrick) then
-			TriggerClientEvent("inventory:client:ItemBox", src, QBCore.Shared.Items['coke_small_brick'], "remove", Config.CokeProcessing.SmallBrick)
-			TriggerClientEvent("inventory:client:ItemBox", src, QBCore.Shared.Items['coke_brick'], "add", Config.CokeProcessing.LargeBrick)
-			TriggerClientEvent('QBCore:Notify', src, Lang:t("success.coke_brick"), "success")
+	if Player.Functions.RemoveItem('coke_small_brick', 1) then
+		if Player.Functions.AddItem('coke_brick', 1) then
+			TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['coke_small_brick'], 'remove', 1)
+			TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['coke_brick'], 'add', 1)
+			TriggerClientEvent('QBCore:Notify', src, Lang:t('success.coke_brick'), 'success')
+			TriggerEvent('qb-log:server:CreateLog', 'cokelogs', 'Drug Processing (Coke)', 'pink', ('**Player:** %s | **License:** ||(%s)||\n **Info:** Processed Small Brick Into Coke Brick'):format(GetPlayerName(src), Player.PlayerData.license))
 		else
-			Player.Functions.AddItem('coke_small_brick', Config.CokeProcessing.SmallBrick)
+			Player.Functions.AddItem('coke_small_brick', 1)
 		end
 	end
 end)
